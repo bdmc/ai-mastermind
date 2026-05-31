@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fridge Chef</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #faf7f2;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 2.5rem 1rem 4rem;
+      color: #1a1208;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 640px;
+    }
+
+    .header { text-align: center; margin-bottom: 2.5rem; }
+    .header-icon { font-size: 42px; display: block; margin-bottom: 0.5rem; color: #3d2c1e; }
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 34px; font-weight: 600;
+      color: #1a1208; letter-spacing: -0.5px;
+    }
+    .header p { font-size: 15px; color: #7a6a55; margin-top: 6px; font-weight: 300; }
+
+    .input-section { margin-bottom: 1.25rem; }
+    .input-label {
+      font-size: 11px; font-weight: 500;
+      color: #7a6a55; text-transform: uppercase;
+      letter-spacing: 0.09em; margin-bottom: 8px; display: block;
+    }
+
+    textarea {
+      width: 100%; min-height: 115px;
+      padding: 14px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px; line-height: 1.6;
+      color: #1a1208; background: #fff;
+      border: 1px solid #ddd0bc;
+      border-radius: 12px;
+      resize: vertical; transition: border-color 0.15s; outline: none;
+    }
+    textarea:focus { border-color: #8b6c45; box-shadow: 0 0 0 3px rgba(125,108,83,0.1); }
+    textarea::placeholder { color: #b0a090; }
+
+    .btn-row { display: flex; gap: 10px; }
+    .btn {
+      flex: 1; padding: 13px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500;
+      border-radius: 8px; cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: #3d2c1e; color: #f5ede0; border: 1px solid #3d2c1e; }
+    .btn-primary:hover:not(:disabled) { background: #2e2015; }
+    .btn-surprise { background: #fff; color: #3d2c1e; border: 1px solid #ddd0bc; }
+    .btn-surprise:hover:not(:disabled) { background: #f5ede0; }
+
+    .loading { text-align: center; padding: 2.5rem 0; display: none; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 2px solid #e8ddd0;
+      border-top-color: #8b6c45;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading p { font-size: 13px; color: #7a6a55; font-weight: 300; }
+
+    .results { display: none; margin-top: 1.75rem; }
+    .results-label {
+      font-size: 11px; font-weight: 500; color: #7a6a55;
+      text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 12px;
+    }
+
+    .dish-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .dish-tab {
+      padding: 7px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 400;
+      border-radius: 99px; border: 1px solid #ddd0bc;
+      background: #fff; color: #7a6a55;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .dish-tab:hover { background: #f5ede0; color: #3d2c1e; }
+    .dish-tab.active { background: #3d2c1e; color: #f5ede0; border-color: #3d2c1e; font-weight: 500; }
+
+    .result-card {
+      background: #fff;
+      border: 1px solid #e8ddd0;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .result-hero { background: #3d2c1e; padding: 1.6rem; }
+    .dish-number { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(245,237,224,0.45); margin-bottom: 4px; }
+    .dish-name { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 600; color: #f5ede0; line-height: 1.25; margin-bottom: 8px; }
+    .dish-desc { font-size: 14px; color: rgba(245,237,224,0.7); font-weight: 300; line-height: 1.6; margin-bottom: 14px; }
+
+    .time-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+    .time-pill {
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(245,237,224,0.1);
+      border: 1px solid rgba(245,237,224,0.2);
+      border-radius: 99px; padding: 4px 12px 4px 8px;
+      font-size: 13px; color: rgba(245,237,224,0.85); font-weight: 400;
+    }
+    .time-pill i { font-size: 14px; color: rgba(245,237,224,0.5); }
+
+    .result-body { padding: 1.6rem; }
+    .section-heading {
+      font-size: 11px; font-weight: 500; letter-spacing: 0.09em;
+      text-transform: uppercase; color: #7a6a55;
+      margin-bottom: 10px; padding-bottom: 6px;
+      border-bottom: 1px solid #f0e8d8;
+    }
+
+    .ingredients-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.5rem; }
+    .tag { font-size: 13px; padding: 4px 12px; border-radius: 99px; font-weight: 400; }
+    .tag-used { background: #f0e8d8; color: #5a3e20; border: 1px solid #d9c8a8; }
+    .tag-extra { background: #e8f0fb; color: #1e4a8c; border: 1px solid #b8d0f0; }
+
+    .steps-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+    .step-item { display: flex; gap: 14px; align-items: flex-start; }
+    .step-num {
+      width: 27px; height: 27px; border-radius: 50%;
+      background: #3d2c1e; color: #f5ede0;
+      font-size: 12px; font-weight: 500;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .step-text { font-size: 14px; line-height: 1.7; color: #2a1e10; font-weight: 300; }
+
+    .section-gap { margin-bottom: 1.5rem; }
+
+    .error-msg {
+      display: none; font-size: 13px; color: #a02020;
+      background: #fdf0f0; border: 1px solid #f0c8c8;
+      border-radius: 8px; padding: 10px 14px; margin-top: 10px;
+    }
+
+    .api-note {
+      margin-top: 2rem;
+      padding: 14px 16px;
+      background: #fff8ee;
+      border: 1px solid #f0ddb8;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #7a5a20;
+      line-height: 1.6;
+    }
+    .api-note a { color: #3d2c1e; font-weight: 500; }
+
+    @media (max-width: 480px) {
+      .btn-row { flex-direction: column; }
+      .dish-name { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <span class="header-icon" aria-hidden="true"><i class="ti ti-chef-hat"></i></span>
+      <h1>Fridge Chef</h1>
+      <p>Tell me what's in your fridge — I'll suggest three dishes to make.</p>
+    </div>
+
+    <div class="input-section">
+      <label class="input-label" for="ingredients">Your ingredients</label>
+      <textarea id="ingredients" placeholder="e.g. eggs, cheddar, spinach, onion, garlic, butter, milk, leftover chicken…"></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-cook" onclick="getRecipes(false)">
+        <i class="ti ti-search" aria-hidden="true"></i> Find three dishes
+      </button>
+      <button class="btn btn-surprise" id="btn-surprise" onclick="getRecipes(true)">
+        <i class="ti ti-sparkles" aria-hidden="true"></i> Surprise me
+      </button>
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p id="loading-text">Checking your fridge…</p>
+    </div>
+
+    <div class="results" id="results">
+      <div class="results-label">Choose a dish</div>
+      <div class="dish-tabs" id="dish-tabs"></div>
+      <div class="result-card" id="result-card">
+        <div class="result-hero">
+          <div class="dish-number" id="dish-number"></div>
+          <div class="dish-name" id="dish-name"></div>
+          <div class="dish-desc" id="dish-desc"></div>
+          <div class="time-pills" id="time-pills"></div>
+        </div>
+        <div class="result-body">
+          <div class="section-gap">
+            <div class="section-heading">Ingredients you're using</div>
+            <div class="ingredients-grid" id="used-ingredients"></div>
+          </div>
+          <div class="section-gap" id="extras-section">
+            <div class="section-heading">A few extras you might need</div>
+            <div class="ingredients-grid" id="extra-ingredients"></div>
+          </div>
+          <div>
+            <div class="section-heading">How to make it</div>
+            <ol class="steps-list" id="steps-list"></ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="api-note">
+      <strong>Note:</strong> This app calls the Anthropic API directly from your browser.
+      You'll need to add your API key — open the HTML file, find <code>YOUR_API_KEY_HERE</code>
+      and replace it with your key from <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.
+    </div>
+  </div>
+
+  <script>
+    const API_KEY = "YOUR_API_KEY_HERE";
+
+    const LOADING_MESSAGES = ["Checking your fridge…","Dreaming up three dishes…","Plating the options…","Almost on the table…"];
+    let loadingTimer;
+    let allRecipes = [];
+
+    function cycleLoading() {
+      let i = 0;
+      const el = document.getElementById('loading-text');
+      el.textContent = LOADING_MESSAGES[0];
+      loadingTimer = setInterval(() => { i = (i+1) % LOADING_MESSAGES.length; el.textContent = LOADING_MESSAGES[i]; }, 1800);
+    }
+
+    async function getRecipes(creative) {
+      const raw = document.getElementById('ingredients').value.trim();
+      if (!raw) { showError("Please list some ingredients first!"); return; }
+      hideError();
+      showLoading();
+      cycleLoading();
+
+      const modeNote = creative
+        ? "Be creative and unexpected — suggest surprising, fusion-inspired, or inventive dishes. Vary the style of each dish significantly."
+        : "Suggest three practical, varied dishes (e.g. different meal types or cuisines) that make good use of the ingredients.";
+
+      const prompt = `You are a helpful chef assistant. The user has these ingredients: ${raw}.
+
+${modeNote}
+
+Return ONLY a JSON array of exactly 3 dish objects (no markdown, no preamble):
+[
+  {
+    "dish": "Dish name",
+    "description": "One appetising sentence",
+    "prep_time": "10 mins",
+    "cook_time": "20 mins",
+    "total_time": "30 mins",
+    "used_ingredients": ["ingredient1", "ingredient2"],
+    "extra_ingredients": ["extra1"],
+    "steps": ["Step one", "Step two", "Step three"]
+  }
+]
+
+Rules:
+- Return exactly 3 dishes, varied in style or cuisine
+- used_ingredients: from the user's list only
+- extra_ingredients: max 5; omit key if none needed
+- steps: 4-7 concise steps each
+- Return only valid JSON array, nothing else`;
+
+      try {
+        const res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": API_KEY,
+            "anthropic-version": "2023-06-01",
+            "anthropic-dangerous-direct-browser-access": "true"
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 2500,
+            messages: [{ role: "user", content: prompt }]
+          })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        const text = data.content.map(b => b.text || "").join("").trim();
+        const clean = text.replace(/```json|```/g, "").trim();
+        allRecipes = JSON.parse(clean);
+        renderTabs();
+        showRecipe(0);
+        hideLoading();
+        document.getElementById('results').style.display = 'block';
+        document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch(e) {
+        hideLoading();
+        showError("Couldn't generate recipes. Check your API key or try again. (" + e.message + ")");
+      }
+    }
+
+    function renderTabs() {
+      const tabsEl = document.getElementById('dish-tabs');
+      tabsEl.innerHTML = allRecipes.map((r, i) =>
+        `<button class="dish-tab${i===0?' active':''}" onclick="selectTab(${i})">${r.dish}</button>`
+      ).join('');
+    }
+
+    function selectTab(idx) {
+      document.querySelectorAll('.dish-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+      showRecipe(idx);
+    }
+
+    function showRecipe(idx) {
+      const r = allRecipes[idx];
+      const ordinals = ["Option 1","Option 2","Option 3"];
+      document.getElementById('dish-number').textContent = ordinals[idx] || `Option ${idx+1}`;
+      document.getElementById('dish-name').textContent = r.dish || "";
+      document.getElementById('dish-desc').textContent = r.description || "";
+
+      document.getElementById('time-pills').innerHTML = [
+        r.prep_time  ? `<span class="time-pill"><i class="ti ti-knife"></i> Prep: ${r.prep_time}</span>` : '',
+        r.cook_time  ? `<span class="time-pill"><i class="ti ti-flame"></i> Cook: ${r.cook_time}</span>` : '',
+        r.total_time ? `<span class="time-pill"><i class="ti ti-clock"></i> Total: ${r.total_time}</span>` : ''
+      ].join('');
+
+      document.getElementById('used-ingredients').innerHTML =
+        (r.used_ingredients || []).map(i => `<span class="tag tag-used">${i}</span>`).join('');
+
+      const extrasSection = document.getElementById('extras-section');
+      const extrasEl = document.getElementById('extra-ingredients');
+      if (r.extra_ingredients && r.extra_ingredients.length > 0) {
+        extrasEl.innerHTML = r.extra_ingredients.map(i => `<span class="tag tag-extra">${i}</span>`).join('');
+        extrasSection.style.display = 'block';
+      } else {
+        extrasSection.style.display = 'none';
+      }
+
+      document.getElementById('steps-list').innerHTML = (r.steps || []).map((s, i) =>
+        `<li class="step-item"><span class="step-num">${i+1}</span><span class="step-text">${s}</span></li>`
+      ).join('');
+    }
+
+    function showLoading() {
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('results').style.display = 'none';
+      document.getElementById('btn-cook').disabled = true;
+      document.getElementById('btn-surprise').disabled = true;
+    }
+
+    function hideLoading() {
+      clearInterval(loadingTimer);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('btn-cook').disabled = false;
+      document.getElementById('btn-surprise').disabled = false;
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg; el.style.display = 'block';
+    }
+    function hideError() { document.getElementById('error-msg').style.display = 'none'; }
+  </script>
+</body>
+</html>
